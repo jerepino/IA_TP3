@@ -10,6 +10,7 @@ class Capa:
         :param input: cantidad de entradas de la capa anterior (conexion por neurona)
         :param act_f: funcion de activacion de la capa
         """
+        np.random.seed(101)
         self.Wji = np.random.randn(n, input) / np.sqrt(n)
         self.bj = np.ones((n, 1)) * 0.1
         f = dict(relu=lambda x: np.maximum(x, 0), tanh=lambda x: np.tanh(x), sigmoid=lambda x: 1 / (1 + np.exp(-x)),
@@ -51,35 +52,31 @@ class Red:
         return self.capa[-1].output
 
     def backpropagation(self, data_Y, lr=0.1):
-        print("\n\n bacpropagation\n\n")
+        print("\n\n Backpropagation\n\n")
         data_Y = data_Y[:, np.newaxis]
+        delta_ku = []
         for l in reversed(range(1, len(self.capa))):
 
             h_ku = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
 
-            if l == len(self.capa) - 1:
+            if l == (len(self.capa) - 1):
 
-                delta_ku = (data_Y - self.capa[l].g(h_ku)) @ self.capa[l].dg(h_ku)
+                delta_ku.insert(0, (data_Y - self.capa[l].g(h_ku)) @ self.capa[l].dg(h_ku))
 
             else:
 
-                delta_ku = delta_ku_ant @ W @ self.capa[l].dg(h_ku)
-                print("delta k ant")
-                print(delta_ku_ant)
+                delta_ku.insert(0, delta_ku[0] @ W @ np.diagflat(self.capa[l].dg(h_ku)))
 
-            W = self.capa[l].Wji
-            delta_ku_ant = delta_ku
+            W = self.capa[l].Wji.copy()
 
+            dW = lr * delta_ku[0].T @ self.capa[l-1].output.T
+            dB = (-1) * lr * delta_ku[0].T
 
-            # print("shape W , delta , output",W.shape,delta_ku.shape,self.capa[l-1].output.shape)
-            dW = lr * delta_ku @ self.capa[l-1].output.T
-            dB = lr * np.mean(delta_ku, axis=0, keepdims=True)
-
-            self.capa[l].bj += dB.T
+            self.capa[l].bj += dB
             self.capa[l].Wji += dW
 
             print("En la capa", l)
-            print("valor deseado - obtenido")
+            print("Valor deseado - obtenido")
             print(data_Y, self.capa[-1].output)
             print("Wij")
             print(self.capa[l].Wji)
