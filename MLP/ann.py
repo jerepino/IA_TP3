@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 import matplotlib as pl
 
 
@@ -35,19 +36,18 @@ class Red:
         self.capa[0].output = X[:, np.newaxis]
 
         for l in range(1, len(self.capa)):
-
             a = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
             self.capa[l].output = self.capa[l].g(a)
 
-            print('En la capa :', l)
-            print("valor entrada ")
-            print(self.capa[l - 1].output)
-            print(" Wji")
-            print(self.capa[l].Wji)
-            print("bias")
-            print(self.capa[l].bj)
-            print(" output")
-            print(self.capa[l].output)
+            # print('En la capa :', l)
+            # print("valor entrada ")
+            # print(self.capa[l - 1].output)
+            # print(" Wji")
+            # print(self.capa[l].Wji)
+            # print("bias")
+            # print(self.capa[l].bj)
+            # print(" output")
+            # print(self.capa[l].output)
 
         return self.capa[-1].output
 
@@ -69,36 +69,82 @@ class Red:
 
             W = self.capa[l].Wji.copy()
 
-            dW = lr * delta_ku[0].T @ self.capa[l-1].output.T
+            dW = lr * delta_ku[0].T @ self.capa[l - 1].output.T
             dB = (-1) * lr * delta_ku[0].T
 
             self.capa[l].bj += dB
             self.capa[l].Wji += dW
 
-            print("En la capa", l)
-            print("Valor deseado - obtenido")
-            print(data_Y, self.capa[-1].output)
-            print("Wij")
-            print(self.capa[l].Wji)
-            print("bj")
-            print(self.capa[l].bj)
+            # print("En la capa", l)
+            # print("Valor deseado - obtenido")
+            # print(data_Y, self.capa[-1].output)
+            # print("Wij")
+            # print(self.capa[l].Wji)
+            # print("bj")
+            # print(self.capa[l].bj)
 
-    def train(self, data_X, data_Y, epoc, data_val = 0):
+    def train(self, data_X, data_Y, epoc, data_val=0):
+        error = []
         for e in range(epoc):
             for index, X in enumerate(data_X):
                 z = self.forward(X)
                 self.backpropagation(data_Y[index])
-
+        # if index % 25 == 0:
+        #     error.append(z-data_Y)
+        #     pl.plot(error,e)
 
 if __name__ == '__main__':
 
-    data_X = np.array([[0, 0, 1], [0, 0, 0], [1, 1, 1], [0, 1, 1]])
-    data_Y = np.array([1, 0, 5, 3])
-    data_Y = data_Y[:, np.newaxis]
-   # print(data_X.shape, data_Y.shape)
-    net = Red()
-    net.add(3, 3)
-    net.add(2, 3, act_f='tanh')
-    net.add(1, 2, act_f='tanh')
-    print("La topologia es 3 - 2 - 1")
-    net.train(data_X,data_Y,1)
+    # ---------------------------------
+    # - Obtencio de datos del dataset -
+    # ---------------------------------
+    filename = 'USA_Housing.csv'
+    raw_data = open(filename, 'rt')
+    reader = csv.reader(raw_data)
+    x = list(reader)
+    data = np.array(x)
+
+    # ---------------------------------------------
+    # - Eliminacion de la cabecera y la direccion -
+    # ---------------------------------------------
+    data = np.delete(data, 6, axis=1)
+    data = np.delete(data, 0, axis=0)
+    data = np.array(data).astype('float32')
+
+    # ---------------------------------------------
+    # -     Seleccion train, test y validation    -
+    # ---------------------------------------------
+    train = data[4000, :]
+    test = data[4000:4500, :]
+    validation = data[4500:, :]
+
+    # ---------------------------------------------
+    # -     Normalizacion del dataset y test      -
+    # ---------------------------------------------
+    for i, val in enumerate(train[0, :]):
+        mean = np.mean(train[:, i])
+        train[:, i] -= mean
+        test[:, i] -= mean
+        validation[:, i] -= mean
+        std = np.std(train[:, i])
+        train[:, i] /= std
+        test[:, i] -= std
+        validation[:, i] -= std
+
+    # --------------------------------------
+    # - Separo los datos de los resultados -
+    # --------------------------------------
+    train_X = np.array(train[:, :5])
+    print(train_X.shape)
+    train_Y = np.array(train[:, -1])
+    train_Y = train_Y[:, np.newaxis]
+    print(train_Y.shape)
+    print(train_X)
+
+# print(data_X.shape, data_Y.shape)
+#  net = Red()
+#  net.add(3, 3)
+#  net.add(2, 3, act_f='tanh')
+#  net.add(1, 2, act_f='tanh')
+#  print("La topologia es 3 - 2 - 1")
+#  net.train(data_X,data_Y,1)
