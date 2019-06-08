@@ -1,6 +1,7 @@
+from time import  sleep
 import numpy as np
 import csv
-import matplotlib as pl
+from matplotlib import pyplot as plt
 
 
 class Capa:
@@ -11,13 +12,14 @@ class Capa:
         :param input: cantidad de entradas de la capa anterior (conexion por neurona)
         :param act_f: funcion de activacion de la capa
         """
-        np.random.seed(101)
+        # np.random.seed(101)
         self.Wji = np.random.randn(n, input) / np.sqrt(n)
         self.bj = np.ones((n, 1)) * 0.1
         f = dict(relu=lambda x: np.maximum(x, 0), tanh=lambda x: np.tanh(x), sigmoid=lambda x: 1 / (1 + np.exp(-x)),
-                 softplus=lambda x: np.log(1 + np.exp(x)))
-        df = dict(relu=lambda x: (0, 1)[x >= 0], tanh=lambda x: 1 - np.tanh(x) ** 2,
-                  sigmoid=lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2, softplus=lambda x: 1 / (1 + np.exp(-x)))
+                 softplus=lambda x: np.log(1 + np.exp(x)), identidad=lambda x: x)
+        df = dict(relu=lambda x: 1. * (x > 0), tanh=lambda x: 1 - np.tanh(x) ** 2,
+                  sigmoid=lambda x: np.exp(-x) / (1 + np.exp(-x)) ** 2, softplus=lambda x: 1 / (1 + np.exp(-x)),
+                  identidad=lambda x: np.ones_like(x))
         self.g = f[act_f]
         self.dg = df[act_f]
         self.n = n
@@ -32,7 +34,7 @@ class Red:
         self.capa.append(Capa(n, p, act_f))
 
     def forward(self, X):
-        print("\n\n Forward\n\n")
+        # print("\n\n Forward\n\n")
         self.capa[0].output = X[:, np.newaxis]
 
         for l in range(1, len(self.capa)):
@@ -52,7 +54,7 @@ class Red:
         return self.capa[-1].output
 
     def backpropagation(self, data_Y, lr=0.1):
-        print("\n\n Backpropagation\n\n")
+        # print("\n\n Backpropagation\n\n")
         data_Y = data_Y[:, np.newaxis]
         delta_ku = []
         for l in reversed(range(1, len(self.capa))):
@@ -83,15 +85,61 @@ class Red:
             # print("bj")
             # print(self.capa[l].bj)
 
-    def train(self, data_X, data_Y, epoc, data_val=0):
-        error = []
+    def train(self, train_X, train_Y, epoc, validation=False, vali_X=0, vali_Y=0, lr = 0.1):
+        err_train = []
+        err_train_mean = []
+        e_ = []
+        if validation:
+            err_vali = []
+            err_vali_mean = []
         for e in range(epoc):
-            for index, X in enumerate(data_X):
+
+            for index, X in enumerate(train_X):
                 z = self.forward(X)
-                self.backpropagation(data_Y[index])
-        # if index % 25 == 0:
-        #     error.append(z-data_Y)
-        #     pl.plot(error,e)
+                self.backpropagation(train_Y[index], lr)
+                err_train.append(np.power(z - train_Y[index], 2))
+
+            err_train_mean.append(np.mean(err_train))
+            e_.append(e)
+
+            if validation:
+                for i, Val in enumerate(vali_X):
+                    tk = self.forward(Val)
+                    err_vali.append(np.power(tk-vali_Y[i], 2))
+                err_vali_mean.append(np.mean(err_vali))
+
+            if (e % 10 == 0) and (e != 0):
+
+                plt.figure(1)
+                plt.title('Error medio train')
+                plt.plot(e_, err_train_mean)
+                plt.grid()
+                plt.show()  # Para que no se congele la ejecución
+                if validation:
+                    plt.figure(2)
+                    # print(e_, err_vali_mean)
+                    plt.title('Error medio validation')
+                    plt.plot(e_, err_vali_mean)
+                    plt.grid()
+                    plt.show()  # Para que no se congele la ejecución
+
+                plt.close(1)
+                plt.close(2)
+                if min(err_vali_mean) != err_vali_mean[-1]:
+                    print("Empieza a haber overfiting, utilizo parada temprana")
+                    break
+            # print("El numero de iteraciones de train fueron: ", index)
+
+    def test(self, test_X, test_Y):
+        err_test = []
+        err_test_mean = []
+        for i, Te in enumerate(test_X):
+            tk = self.forward(Te)
+            err_test.append(np.power(tk - test_Y[i], 2))
+        err_test_mean.append(np.mean(err_test))
+        print("El error cuadratico medio para nuestra red obtenido con el conjunto test es: ", err_test_mean)
+
+
 
 if __name__ == '__main__':
 
@@ -114,37 +162,51 @@ if __name__ == '__main__':
     # ---------------------------------------------
     # -     Seleccion train, test y validation    -
     # ---------------------------------------------
-    train = data[4000, :]
-    test = data[4000:4500, :]
-    validation = data[4500:, :]
+    n_data = len(data)
+    n_vali = int(n_data * 0.1)
+    n_test = n_vali + int(n_data * 0.1)
+
+    validation = data[:n_vali, :]
+    test = data[n_vali:n_test, :]
+    train = data[n_test:, :]
 
     # ---------------------------------------------
     # -     Normalizacion del dataset y test      -
     # ---------------------------------------------
-    for i, val in enumerate(train[0, :]):
-        mean = np.mean(train[:, i])
-        train[:, i] -= mean
-        test[:, i] -= mean
-        validation[:, i] -= mean
-        std = np.std(train[:, i])
-        train[:, i] /= std
-        test[:, i] -= std
-        validation[:, i] -= std
+    mean = np.mean(train, axis=0)
+    # print("mean", mean)
+    train -= mean
+    test -= mean
+    validation -= mean
+
+    std = np.std(train, axis=0)
+    # print("std", std)
+    train /= std
+    test /= std
+    validation /= std
 
     # --------------------------------------
     # - Separo los datos de los resultados -
     # --------------------------------------
     train_X = np.array(train[:, :5])
-    print(train_X.shape)
     train_Y = np.array(train[:, -1])
     train_Y = train_Y[:, np.newaxis]
-    print(train_Y.shape)
-    print(train_X)
+
+    validation_X = np.array(validation[:, :5])
+    validation_Y = np.array(validation[:, -1])
+    validation_Y = validation_Y[:, np.newaxis]
+
+    test_X = np.array(test[:, :5])
+    test_Y = np.array(test[:, -1])
+    test_Y = test_Y[:, np.newaxis]
 
 # print(data_X.shape, data_Y.shape)
-#  net = Red()
-#  net.add(3, 3)
-#  net.add(2, 3, act_f='tanh')
-#  net.add(1, 2, act_f='tanh')
-#  print("La topologia es 3 - 2 - 1")
-#  net.train(data_X,data_Y,1)
+    epoc = 61
+    net = Red()
+    net.add(5, 5)
+    net.add(64, 5, act_f='relu')
+    net.add(64, 64, act_f='relu')
+    net.add(1, 64, act_f='identidad')
+
+    net.train(train_X, train_Y, epoc, True, validation_X, validation_Y, 0.001)
+    # net.test(test_X, test_Y)
