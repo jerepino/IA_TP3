@@ -1,4 +1,4 @@
-from time import  sleep
+from time import sleep
 import numpy as np
 import csv
 from matplotlib import pyplot as plt
@@ -13,7 +13,7 @@ class Capa:
         :param act_f: funcion de activacion de la capa
         """
         # np.random.seed(101)
-        self.Wji = np.random.randn(n, input) / np.sqrt(n)
+        self.Wji = np.random.randn(n, input) / np.sqrt(input)
         self.bj = np.ones((n, 1)) * 0.1
         f = dict(relu=lambda x: np.maximum(x, 0), tanh=lambda x: np.tanh(x), sigmoid=lambda x: 1 / (1 + np.exp(-x)),
                  softplus=lambda x: np.log(1 + np.exp(x)), identidad=lambda x: x)
@@ -45,20 +45,22 @@ class Red:
             self.capa[l].output = self.capa[l].g(a)
         return self.capa[-1].output
 
-    def backpropagation(self, data_Y, lr=0.1):
+    def backpropagation(self, data_X, data_Y, lr=0.1):
         # print("\n\n Backpropagation\n\n")
         data_Y = data_Y[:, np.newaxis]
-        delta_ku = []
-        for l in reversed(range(1, len(self.capa))):
+        X_ = data_X[:, np.newaxis]
 
-            h_ku = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
+        delta_ku = []
+        for l in reversed(range(0, len(self.capa))):
+
+            if l == 0:
+                h_ku = self.capa[l].Wji @ X_ - self.capa[l].bj
+            else:
+                h_ku = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
 
             if l == (len(self.capa) - 1):
-
                 delta_ku.insert(0, (data_Y - self.capa[l].g(h_ku)) @ self.capa[l].dg(h_ku))
-
             else:
-
                 delta_ku.insert(0, delta_ku[0] @ W @ np.diagflat(self.capa[l].dg(h_ku)))
 
             W = self.capa[l].Wji.copy()
@@ -80,7 +82,7 @@ class Red:
 
             for index, X in enumerate(train_X):
                 z = self.forward(X)
-                self.backpropagation(train_Y[index], lr)
+                self.backpropagation(X, train_Y[index], lr)
                 err_train.append(np.power(z - train_Y[index], 2))
 
             err_train_mean.append(np.mean(err_train))
@@ -89,26 +91,22 @@ class Red:
             if validation:
                 for i, Val in enumerate(vali_X):
                     tk = self.forward(Val)
-                    err_vali.append(np.power(tk-vali_Y[i], 2))
+                    err_vali.append(np.power(tk - vali_Y[i], 2))
                 err_vali_mean.append(np.mean(err_vali))
 
             if (e % 50 == 0) and (e != 0):
-
                 plt.figure(1)
                 plt.title('Error medio')
                 plt.ylabel('Error')
                 plt.xlabel('Epoch')
-                plt.plot(e_, err_train_mean, 'b', label="Train")
+                plt.plot(e_, err_train_mean, 'b-.', label="Train")
                 plt.legend()
                 plt.grid(True)
-                # plt.show()  # Para que no se congele la ejecución
+
                 if validation:
-                    # plt.figure(2)
-                    # plt.title('Error medio validation')
                     plt.plot(e_, err_vali_mean, 'r', label="Validation")
                     plt.legend()
-                    # plt.grid()
-                    # plt.show()  # Para que no se congele la ejecución
+
                 # plt.ion()
                 plt.show()
                 plt.pause(.0001)
@@ -145,7 +143,7 @@ if __name__ == '__main__':
     # ---------------------------------------------
     data = np.delete(data, 6, axis=1)
     data = np.delete(data, 0, axis=0)
-    data = np.array(data).astype('float32')
+    data = np.array(data).astype('float64')
 
     # ---------------------------------------------
     # -     Seleccion train, test y validation    -
@@ -190,10 +188,12 @@ if __name__ == '__main__':
 
     epoch = 101
     net = Red()
-    net.add(15, 5)
-    net.add(15, 15, act_f='relu')
-    net.add(6, 15, act_f='relu')
-    net.add(1, 6, act_f='identidad')
+    net.add(42, 5, act_f='relu')
+    # net.add(25, 15, act_f='relu')
+    net.add(1, 42, act_f='identidad')
+    # net.add(1, 6, act_f='identidad')
 
-    net.train(train_X, train_Y, epoch, True, validation_X, validation_Y, 0.0001)
+    # print(net.capa[0].Wji)
+
+    net.train(train_X, train_Y, epoch, True, validation_X, validation_Y, 0.0005)
     # net.test(test_X, test_Y)
