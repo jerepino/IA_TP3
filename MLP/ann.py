@@ -35,22 +35,14 @@ class Red:
 
     def forward(self, X):
         # print("\n\n Forward\n\n")
-        self.capa[0].output = X[:, np.newaxis]
+        X_ = X[:, np.newaxis]
 
-        for l in range(1, len(self.capa)):
-            a = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
+        for l in range(0, len(self.capa)):
+            if l == 0:
+                a = self.capa[l].Wji @ X_ - self.capa[l].bj
+            else:
+                a = self.capa[l].Wji @ self.capa[l - 1].output - self.capa[l].bj
             self.capa[l].output = self.capa[l].g(a)
-
-            # print('En la capa :', l)
-            # print("valor entrada ")
-            # print(self.capa[l - 1].output)
-            # print(" Wji")
-            # print(self.capa[l].Wji)
-            # print("bias")
-            # print(self.capa[l].bj)
-            # print(" output")
-            # print(self.capa[l].output)
-
         return self.capa[-1].output
 
     def backpropagation(self, data_Y, lr=0.1):
@@ -77,22 +69,14 @@ class Red:
             self.capa[l].bj += dB
             self.capa[l].Wji += dW
 
-            # print("En la capa", l)
-            # print("Valor deseado - obtenido")
-            # print(data_Y, self.capa[-1].output)
-            # print("Wij")
-            # print(self.capa[l].Wji)
-            # print("bj")
-            # print(self.capa[l].bj)
-
-    def train(self, train_X, train_Y, epoc, validation=False, vali_X=0, vali_Y=0, lr = 0.1):
+    def train(self, train_X, train_Y, epoch, validation=False, vali_X=0, vali_Y=0, lr=0.1):
         err_train = []
         err_train_mean = []
         e_ = []
         if validation:
             err_vali = []
             err_vali_mean = []
-        for e in range(epoc):
+        for e in range(epoch):
 
             for index, X in enumerate(train_X):
                 z = self.forward(X)
@@ -108,27 +92,32 @@ class Red:
                     err_vali.append(np.power(tk-vali_Y[i], 2))
                 err_vali_mean.append(np.mean(err_vali))
 
-            if (e % 10 == 0) and (e != 0):
+            if (e % 50 == 0) and (e != 0):
 
                 plt.figure(1)
-                plt.title('Error medio train')
-                plt.plot(e_, err_train_mean)
-                plt.grid()
-                plt.show()  # Para que no se congele la ejecución
+                plt.title('Error medio')
+                plt.ylabel('Error')
+                plt.xlabel('Epoch')
+                plt.plot(e_, err_train_mean, 'b', label="Train")
+                plt.legend()
+                plt.grid(True)
+                # plt.show()  # Para que no se congele la ejecución
                 if validation:
-                    plt.figure(2)
-                    # print(e_, err_vali_mean)
-                    plt.title('Error medio validation')
-                    plt.plot(e_, err_vali_mean)
-                    plt.grid()
-                    plt.show()  # Para que no se congele la ejecución
-
-                plt.close(1)
-                plt.close(2)
+                    # plt.figure(2)
+                    # plt.title('Error medio validation')
+                    plt.plot(e_, err_vali_mean, 'r', label="Validation")
+                    plt.legend()
+                    # plt.grid()
+                    # plt.show()  # Para que no se congele la ejecución
+                # plt.ion()
+                plt.show()
+                plt.pause(.0001)
                 if min(err_vali_mean) != err_vali_mean[-1]:
                     print("Empieza a haber overfiting, utilizo parada temprana")
                     break
             # print("El numero de iteraciones de train fueron: ", index)
+            #     sleep(5)
+            #     plt.close(1)
 
     def test(self, test_X, test_Y):
         err_test = []
@@ -138,7 +127,6 @@ class Red:
             err_test.append(np.power(tk - test_Y[i], 2))
         err_test_mean.append(np.mean(err_test))
         print("El error cuadratico medio para nuestra red obtenido con el conjunto test es: ", err_test_mean)
-
 
 
 if __name__ == '__main__':
@@ -200,13 +188,12 @@ if __name__ == '__main__':
     test_Y = np.array(test[:, -1])
     test_Y = test_Y[:, np.newaxis]
 
-# print(data_X.shape, data_Y.shape)
-    epoc = 61
+    epoch = 101
     net = Red()
-    net.add(5, 5)
-    net.add(64, 5, act_f='relu')
-    net.add(64, 64, act_f='relu')
-    net.add(1, 64, act_f='identidad')
+    net.add(15, 5)
+    net.add(15, 15, act_f='relu')
+    net.add(6, 15, act_f='relu')
+    net.add(1, 6, act_f='identidad')
 
-    net.train(train_X, train_Y, epoc, True, validation_X, validation_Y, 0.001)
+    net.train(train_X, train_Y, epoch, True, validation_X, validation_Y, 0.0001)
     # net.test(test_X, test_Y)
