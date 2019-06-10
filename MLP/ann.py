@@ -129,9 +129,9 @@ class Red:
 
 if __name__ == '__main__':
 
-    # ---------------------------------
-    # - Obtencio de datos del dataset -
-    # ---------------------------------
+    # ---------------------------------------------
+    # -     Obtencio de datos del dataset         -
+    # ---------------------------------------------
     filename = 'USA_Housing.csv'
     raw_data = open(filename, 'rt')
     reader = csv.reader(raw_data)
@@ -171,9 +171,9 @@ if __name__ == '__main__':
     test /= std
     validation /= std
 
-    # --------------------------------------
-    # - Separo los datos de los resultados -
-    # --------------------------------------
+    # -------------------------------------------
+    # -  Separo los datos de los resultados     -
+    # -------------------------------------------
     train_X = np.array(train[:, :5])
     train_Y = np.array(train[:, -1])
     train_Y = train_Y[:, np.newaxis]
@@ -186,6 +186,9 @@ if __name__ == '__main__':
     test_Y = np.array(test[:, -1])
     test_Y = test_Y[:, np.newaxis]
 
+    # ------------------------------------------
+    # -        Arquitectura de la red          -
+    # ------------------------------------------
     epoch = 101
     net = Red()
     net.add(42, 5, act_f='relu')
