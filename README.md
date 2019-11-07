@@ -1,2 +1,13 @@
 # IA_TP3
-ANN
+Artificial Neural Network
+
+1. Implementar una red tipo MLP.
+  a. Al hacerlo, diseñar el software de manera que el uso de diferentes funciones de
+activación y diferente cantidad de neuronas por capa no requieran cambios
+drásticos en el algoritmo principal
+  b. Generar un dataset con ejemplos etiquetados mediante el modelo matemático del
+péndulo invertido. La etiqueta de cada ejemplo sería la salida del controlador
+difuso en cada caso (es decir que la red neuronal aprenderá el comportamiento del
+controlador difuso para el sistema del péndulo invertido)
+  c. Entrenar el MLP con el dataset generado
+  d. Entrenar el MLP con alguno de los datasets adicionales provistos
