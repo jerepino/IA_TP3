@@ -15,3 +15,13 @@ controlador difuso para el sistema del péndulo invertido)
   c. Entrenar el MLP con el dataset generado
   
   d. Entrenar el MLP con alguno de los datasets adicionales provistos
+
+2. Implementar una red tipo Mapa de Kohonen para procesar caracteres escritos a mano para
+
+a. Reconocer caracteres (clasificación: LVQ)
+
+b. Asociar caracteres parciales con caracteres completos (memoria asociativa)
+
+Este ejercicio se realizo sobre google COLAB a continuacion se deja el link al codigo 
+
+https://colab.research.google.com/drive/1VzCB_SnLdl5TbMWPP4u9SpQsZ4r27p9z
