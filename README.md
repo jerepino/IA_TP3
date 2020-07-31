@@ -22,6 +22,4 @@ a. Reconocer caracteres (clasificación: LVQ)
 
 b. Asociar caracteres parciales con caracteres completos (memoria asociativa)
 
-Este ejercicio se realizo sobre google COLAB a continuacion se deja el link al codigo 
-
-https://colab.research.google.com/drive/1VzCB_SnLdl5TbMWPP4u9SpQsZ4r27p9z
+Este ejercicio se realizo sobre google COLAB a continuacion se deja el link [SOFM_LVQ](https://colab.research.google.com/drive/1VzCB_SnLdl5TbMWPP4u9SpQsZ4r27p9z).
